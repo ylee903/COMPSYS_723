@@ -157,7 +157,7 @@ void lcd_task1(void *pvParameters)
 		xSemaphoreTake(shared_lcd_sem, portMAX_DELAY);
 
 		fprintf(lcd, "%c%s", ESC, CLEAR_LCD_STRING);
-		fprintf(lcd, "LCD task 1\n");
+		fprintf(lcd, "This is LCD task 1\n");
 
 		xSemaphoreGive(shared_lcd_sem);
 
@@ -173,7 +173,7 @@ void lcd_task2(void *pvParameters)
 		xSemaphoreTake(shared_lcd_sem, portMAX_DELAY);
 
 		fprintf(lcd, "%c%s", ESC, CLEAR_LCD_STRING);
-		fprintf(lcd, "LCD task 2\n");
+		fprintf(lcd, "This is LCD task 2\n");
 
 		xSemaphoreGive(shared_lcd_sem);
 
