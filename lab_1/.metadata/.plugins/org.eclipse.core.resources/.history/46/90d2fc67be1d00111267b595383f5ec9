@@ -25,8 +25,8 @@
 //Counting Task
 #define COUNTER_TASK_PRIORITY 	  8
 //Lcd display task
-#define LCD_TASK1_PRIORITY 	      13
-#define LCD_TASK2_PRIORITY 		  14
+#define LCD_TASK1_PRIORITY 	      7
+#define LCD_TASK2_PRIORITY 		  6
 
 // Definition of Message Queue
 #define   MSG_QUEUE_SIZE  30

@@ -22,11 +22,7 @@
 #define RECEIVE_TASK1_PRIORITY    11
 #define RECEIVE_TASK2_PRIORITY    10
 #define SEND_TASK_PRIORITY        9
-//Counting Task
 #define COUNTER_TASK_PRIORITY 	  8
-//Lcd display task
-#define LCD_TASK1_PRIORITY 	      13
-#define LCD_TASK2_PRIORITY 		  14
 
 // Definition of Message Queue
 #define   MSG_QUEUE_SIZE  30
@@ -45,12 +41,6 @@ unsigned int number_of_messages_received_task2 = 0;
 unsigned int getsem_task1_got_sem = 0;
 unsigned int getsem_task2_got_sem = 0;
 char sem_owner_task_name[20];
-
-SemaphoreHandle_t shared_lcd_sem;
-FILE *lcd;
-
-#define ESC 27
-#define CLEAR_LCD_STRING "[2J"
 
 // Local Function Prototypes
 int initOSDataStructs(void);
@@ -155,63 +145,28 @@ void receive_task2(void *pvParameters)
 		vTaskDelay(1000);
 	}
 }
-//Counting Task
-//void counter_task(void *pvParameters)
-//{
-//    int counter = 0;
-//
-//    while (1)
-//    {
-//        counter++;
-//
-//        // write the counter value to the seven-segment display
-//        IOWR(SEVEN_SEG_BASE, 0, counter);
-//
-//        // delay for 1 second
-//        vTaskDelay(pdMS_TO_TICKS(1000));
-//    }
-//}
 
-void lcd_task1(void* pvParameters)
+void counter_task(void *pvParameters)
 {
-	while (1)
-	{
-		xSemaphoreTake(shared_lcd_sem, portMAX_DELAY);
+    int counter = 0;
 
-		fprintf(lcd, "%c%s", ESC, CLEAR_LCD_STRING);
-		fprintf(lcd, "LCD task 1\n");
+    while (1)
+    {
+        counter++;
 
-		xSemaphoreGive(shared_lcd_sem);
+        // write the counter value to the seven-segment display
+        IOWR(SEVEN_SEG_BASE, 0, counter);
 
-		vTaskDelay(pdMS_TO_TICKS(5000));
-	}
-}
-
-void lcd_task2(void* pvParameters)
-{
-	while (1)
-	{
-		xSemaphoreTake(shared_lcd_sem, portMAX_DELAY);
-
-		fprintf(lcd, "%c%s", ESC, CLEAR_LCD_STRING);
-		fprintf(lcd, "LCD task 2\n");
-
-		xSemaphoreGive(shared_lcd_sem);
-
-		vTaskDelay(pdMS_TO_TICKS(3000));
-	}
+        // delay for 1 second
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }
 
 int main(int argc, char* argv[], char* envp[])
 {
-	lcd = fopen(CHARACTER_LCD_NAME, "w");
-
 	initOSDataStructs();
 	initCreateTasks();
 	vTaskStartScheduler();
-
-	fclose(lcd);
-
 	for (;;);
 	return 0;
 }
@@ -219,9 +174,8 @@ int main(int argc, char* argv[], char* envp[])
 // This function simply creates a message queue and a semaphore
 int initOSDataStructs(void)
 {
-	msgqueue = xQueueCreate(MSG_QUEUE_SIZE, sizeof(void*));
-	shared_resource_sem = xSemaphoreCreateCounting(9999, 1);
-	shared_lcd_sem = xSemaphoreCreateCounting(9999, 1);
+	msgqueue = xQueueCreate( MSG_QUEUE_SIZE, sizeof( void* ) );
+	shared_resource_sem = xSemaphoreCreateCounting( 9999, 1 );
 	return 0;
 }
 
@@ -235,18 +189,13 @@ int initCreateTasks(void)
 	xTaskCreate(receive_task2, "receive_task2", TASK_STACKSIZE, NULL, RECEIVE_TASK2_PRIORITY, NULL);
 	xTaskCreate(send_task, "send_task", TASK_STACKSIZE, NULL, SEND_TASK_PRIORITY, NULL);
 	xTaskCreate(print_status_task, "print_status_task", TASK_STACKSIZE, NULL, PRINT_STATUS_TASK_PRIORITY, NULL);
-	// Counting Task
-//	xTaskCreate(
-//	counter_task, // the function used to be task
-//	"counter_task", // the name of the task, for debugging purpose
-//	TASK_STACKSIZE, // the size of the stack
-//	NULL, // the parameter passed to the task, in this case, none.
-//	COUNTER_TASK_PRIORITY, // the priority of the task
-//	NULL // task handler, which can be used to delete the task
-//	);
-
-	//Lcd display Tasks
-	xTaskCreate(lcd_task1, "lcd_task1", TASK_STACKSIZE, NULL, LCD_TASK1_PRIORITY, NULL);
-	xTaskCreate(lcd_task2, "lcd_task2", TASK_STACKSIZE, NULL, LCD_TASK2_PRIORITY, NULL);
+	xTaskCreate(
+	counter_task, // the function used to be task
+	"counter_task", // the name of the task, for debugging purpose
+	TASK_STACKSIZE, // the size of the stack
+	NULL, // the parameter passed to the task, in this case, none.
+	COUNTER_TASK_PRIORITY, // the priority of the task
+	NULL // task handler, which can be used to delete the task
+	);
 	return 0;
 }
