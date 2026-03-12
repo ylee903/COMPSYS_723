@@ -1,4 +1,4 @@
 eclipse.preferences.version=1
-newSoftwareExampleWizardPage.defaultLocation=C\:\\Users\\ylee903\\compsys_723\\lab_1\\software\\hello_lab
+newSoftwareExampleWizardPage.defaultLocation=C\:\\Users\\ylee903\\compsys_723\\lab_1\\software\\freertos_test
 newSoftwareExampleWizardPage.sopcinfoFile=C\:\\Users\\ylee903\\compsys_723\\lab_1\\nios2.sopcinfo
-newSoftwareExampleWizardPage2.newBspLocation=C\:\\Users\\ylee903\\compsys_723\\lab_1\\software\\hello_lab_bsp
+newSoftwareExampleWizardPage2.newBspLocation=C\:\\Users\\ylee903\\compsys_723\\lab_1\\software\\freertos_test_bsp
