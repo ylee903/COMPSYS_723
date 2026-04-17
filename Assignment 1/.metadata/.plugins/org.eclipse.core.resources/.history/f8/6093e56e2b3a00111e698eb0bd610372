@@ -86,7 +86,6 @@ int main(void)
     /* Register analyser ISR */
     alt_irq_register(FREQUENCY_ANALYSER_IRQ, NULL, FrequencyAnalyserISR);
 
-    systemStartTick = xTaskGetTickCount();
     /* Start scheduler */
     vTaskStartScheduler();
 

@@ -20,20 +20,4 @@ extern float currentROCOF;
 extern float frequencyThreshold;
 extern float rocofThreshold;
 
-extern TickType_t detectionTick;
-extern TickType_t firstShedTick;
-extern unsigned int timingArmed;
-extern unsigned int firstShedDone;
-
-extern unsigned int recentTimes[5];
-extern unsigned int recentIndex;
-extern unsigned int recentCount;
-
-extern unsigned int minTime;
-extern unsigned int maxTime;
-extern unsigned int totalTime;
-extern unsigned int measurementCount;
-
-extern TickType_t systemStartTick;
-
 #endif

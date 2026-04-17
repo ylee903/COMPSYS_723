@@ -8,6 +8,11 @@
 
 #define LOAD_MASK 0x1F
 
+/* Timing measurement */
+static TickType_t detectionTick = 0;
+static unsigned int timingArmed = 0;
+static unsigned int firstShedDone = 0;
+
 extern SemaphoreHandle_t maintenanceSemaphore;
 
 static int find_lowest_priority_on_not_shed(unsigned int allowed, unsigned int shed)
@@ -97,7 +102,7 @@ void DecisionTask(void *pvParameters)
             /* Arm timing when instability first occurs */
             if (unstable && !timingArmed)
             {
-                detectionTick = now;
+                detectionTick = xTaskGetTickCount();
                 timingArmed = 1;
                 firstShedDone = 0;
             }
@@ -127,10 +132,10 @@ void DecisionTask(void *pvParameters)
                         managingLoads = 1;
                         observationStartTick = now;
 
-                        /* Measure detection > first shed delay */
+                        /* Measure detection -> first shed delay */
                         if (timingArmed && !firstShedDone)
                         {
-                            TickType_t nowTick = now;
+                            TickType_t nowTick = xTaskGetTickCount();
                             unsigned int dt_ms = (nowTick - detectionTick) * portTICK_PERIOD_MS;
 
                             printf("FIRST SHED DELAY = %u ms\n", dt_ms);

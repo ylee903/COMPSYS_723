@@ -106,7 +106,7 @@ void VGATask(void *pvParameters)
     float freq;
     float freqThreshold;
 
-    pixel_buffer_dev = alt_up_pixel_buffer_dma_open_dev(VIDEO_PIXEL_BUFFER_DMA_NAME);
+    pixel_buffer_dev = alt_up_pixel_buffer_dma_open_dev(PIXEL_BUFFER_DMA_NAME);
     if (pixel_buffer_dev == NULL)
     {
         while (1)

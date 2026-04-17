@@ -94,14 +94,6 @@ void DecisionTask(void *pvParameters)
                 unstable = 0;
             }
 
-            /* Arm timing when instability first occurs */
-            if (unstable && !timingArmed)
-            {
-                detectionTick = now;
-                timingArmed = 1;
-                firstShedDone = 0;
-            }
-
             systemUnstable = unstable;
 
             printf("Freq=%.2f Hz | ROCOF=%.2f | Fth=%.2f | Rth=%.2f | unstable=%u | req=%u | allow=%u | shed=%u\n",
@@ -126,17 +118,6 @@ void DecisionTask(void *pvParameters)
                         shed |= (1U << loadToShed);
                         managingLoads = 1;
                         observationStartTick = now;
-
-                        /* Measure detection > first shed delay */
-                        if (timingArmed && !firstShedDone)
-                        {
-                            TickType_t nowTick = now;
-                            unsigned int dt_ms = (nowTick - detectionTick) * portTICK_PERIOD_MS;
-
-                            printf("FIRST SHED DELAY = %u ms\n", dt_ms);
-
-                            firstShedDone = 1;
-                        }
                     }
                 }
             }
@@ -170,9 +151,6 @@ void DecisionTask(void *pvParameters)
                             {
                                 managingLoads = 0;
                                 allowed = requested;
-
-                                timingArmed = 0;
-                                firstShedDone = 0;
                             }
                         }
 
