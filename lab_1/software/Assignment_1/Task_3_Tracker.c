@@ -1,0 +1,34 @@
+#include "Task_3.h"
+
+static uint32_t recentMeasurements[5];
+static uint32_t recentIndex = 0;
+static uint32_t measurementCount = 0;
+static uint32_t minMeasurement = 0xFFFFFFFFu;
+static uint32_t maxMeasurement = 0;
+static uint64_t totalMeasurementSum = 0;
+
+void ResponseTrackerTask(void *pvParameters)
+{
+    ResponseMeasurementMessage msg;
+
+    (void)pvParameters;
+
+    while (1)
+    {
+        if (xQueueReceive(qResponseMeasurements, &msg, portMAX_DELAY) == pdPASS)
+        {
+            uint32_t responseTicks = msg.shedTick - msg.detectionTick;
+
+            recentMeasurements[recentIndex] = responseTicks;
+            recentIndex = (recentIndex + 1u) % 5u;
+
+            if (responseTicks < minMeasurement)
+                minMeasurement = responseTicks;
+            if (responseTicks > maxMeasurement)
+                maxMeasurement = responseTicks;
+
+            totalMeasurementSum += responseTicks;
+            measurementCount++;
+        }
+    }
+}
