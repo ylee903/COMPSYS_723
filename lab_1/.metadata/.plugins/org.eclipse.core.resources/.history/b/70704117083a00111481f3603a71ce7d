@@ -1,0 +1,128 @@
+#include "Main.h"
+#include "Task_1.h"
+#include "Task_2.h"
+#include "Task_3.h"
+#include "Task_4.h"
+
+/* Global RTOS objects */
+QueueHandle_t qFrequencySamples = NULL;
+QueueHandle_t qFrequencyToROCOF = NULL;
+QueueHandle_t qFrequencyToDecision = NULL;
+QueueHandle_t qROCOFToDecision = NULL;
+QueueHandle_t qKeyboardToTask = NULL;
+QueueHandle_t qButtonToDecision = NULL;
+QueueHandle_t qDecisionToLoadControl = NULL;
+QueueHandle_t qResponseMeasurements = NULL;
+
+SemaphoreHandle_t gStateMutex = NULL;
+SharedSystemState gSystemState;
+
+TaskHandle_t gFrequencyTaskHandle = NULL;
+TaskHandle_t gKeyboardTaskHandle = NULL;
+
+float absf_local(float x)
+{
+    return (x < 0.0f) ? -x : x;
+}
+
+uint32_t packRedLEDsFromState(const SharedSystemState *state)
+{
+    uint32_t value = 0;
+    int i;
+
+    for (i = 0; i < LOAD_COUNT; i++)
+    {
+        if (state->loadEnabled[i])
+        {
+            value |= (1u << i);
+        }
+    }
+
+    return value;
+}
+
+uint32_t packGreenLEDsFromState(const SharedSystemState *state)
+{
+    uint32_t value = 0;
+    int i;
+
+    for (i = 0; i < LOAD_COUNT; i++)
+    {
+        if (state->relayShed[i] && !state->maintenanceMode)
+        {
+            value |= (1u << i);
+        }
+    }
+
+    return value;
+}
+
+void initSharedState(void)
+{
+    int i;
+
+    memset(&gSystemState, 0, sizeof(gSystemState));
+    gSystemState.thresholdFreqHz = DEFAULT_FREQ_THRESHOLD_HZ;
+    gSystemState.thresholdROCOFHzPerSec = DEFAULT_ROCOF_THRESHOLD_HZPS;
+    gSystemState.mode = SYSTEM_NORMAL;
+    gSystemState.lastStateChangeTick = 0;
+
+    for (i = 0; i < LOAD_COUNT; i++)
+    {
+        gSystemState.switchState[i] = 0;
+        gSystemState.loadEnabled[i] = 0;
+        gSystemState.relayShed[i] = 0;
+    }
+}
+
+void initQueuesAndMutexes(void)
+{
+    qFrequencySamples      = xQueueCreate(16, sizeof(FrequencySampleMessage));
+    qFrequencyToROCOF      = xQueueCreate(16, sizeof(FrequencyMessage));
+    qFrequencyToDecision   = xQueueCreate(16, sizeof(FrequencyMessage));
+    qROCOFToDecision       = xQueueCreate(16, sizeof(ROCOFMessage));
+    qKeyboardToTask        = xQueueCreate(16, sizeof(KeyboardMessage));
+    qButtonToDecision      = xQueueCreate(8, sizeof(ButtonMessage));
+    qDecisionToLoadControl = xQueueCreate(16, sizeof(LoadCommandMessage));
+    qResponseMeasurements  = xQueueCreate(8, sizeof(ResponseMeasurementMessage));
+
+    gStateMutex = xSemaphoreCreateMutex();
+}
+
+void registerISRs(void)
+{
+    alt_irq_register(PUSH_BUTTON_IRQ, NULL, PushButtonISR);
+    alt_irq_register(FREQUENCY_ANALYSER_IRQ, NULL, FrequencyRelayISR);
+
+    /* Optional PS/2 keyboard ISR */
+    alt_irq_register(PS2_IRQ, NULL, KeyboardISR);
+
+    /* Enable push-button interrupt mask */
+    IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, 0);
+    IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PUSH_BUTTON_BASE, 0x7);
+}
+
+void createApplicationTasks(void)
+{
+    xTaskCreate(FrequencyTask,       "FrequencyTask",       TASK_STACKSIZE, NULL, FREQUENCY_TASK_PRIORITY,    &gFrequencyTaskHandle);
+    xTaskCreate(ROCOFTask,           "ROCOFTask",           TASK_STACKSIZE, NULL, ROCOF_TASK_PRIORITY,        NULL);
+    xTaskCreate(KeyboardTask,        "KeyboardTask",        TASK_STACKSIZE, NULL, KEYBOARD_TASK_PRIORITY,     &gKeyboardTaskHandle);
+    xTaskCreate(DecisionTask,        "DecisionTask",        TASK_STACKSIZE, NULL, DECISION_TASK_PRIORITY,     NULL);
+    xTaskCreate(LoadControlTask,     "LoadControlTask",     TASK_STACKSIZE, NULL, LOAD_CONTROL_TASK_PRIORITY, NULL);
+    xTaskCreate(ResponseTrackerTask, "ResponseTrackerTask", TASK_STACKSIZE, NULL, RESPONSE_TRACKER_PRIORITY,  NULL);
+    xTaskCreate(VGADisplayTask,      "VGADisplayTask",      TASK_STACKSIZE, NULL, VGA_DISPLAY_TASK_PRIORITY,  NULL);
+}
+
+int main(void)
+{
+    initQueuesAndMutexes();
+    initSharedState();
+    registerISRs();
+    createApplicationTasks();
+
+    vTaskStartScheduler();
+
+    while (1) { }
+
+    return 0;
+}

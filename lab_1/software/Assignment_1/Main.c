@@ -1,15 +1,10 @@
 #include "Main.h"
-#include "Task_1.h"
-#include "Task_2.h"
-#include "Task_3.h"
-#include "Task_4.h"
 
-/* Global RTOS objects */
+/* Queue / mutex globals declared in Main.h */
 QueueHandle_t qFrequencySamples = NULL;
 QueueHandle_t qFrequencyToROCOF = NULL;
 QueueHandle_t qFrequencyToDecision = NULL;
 QueueHandle_t qROCOFToDecision = NULL;
-QueueHandle_t qKeyboardToTask = NULL;
 QueueHandle_t qButtonToDecision = NULL;
 QueueHandle_t qDecisionToLoadControl = NULL;
 QueueHandle_t qResponseMeasurements = NULL;
@@ -17,112 +12,160 @@ QueueHandle_t qResponseMeasurements = NULL;
 SemaphoreHandle_t gStateMutex = NULL;
 SharedSystemState gSystemState;
 
-TaskHandle_t gFrequencyTaskHandle = NULL;
-TaskHandle_t gKeyboardTaskHandle = NULL;
-
 float absf_local(float x)
 {
     return (x < 0.0f) ? -x : x;
 }
 
-uint32_t packRedLEDsFromState(const SharedSystemState *state)
-{
-    uint32_t value = 0;
-    int i;
+/* ----- Configuration for this test stage ----- */
+#define SWITCH_POLL_MS  10
 
-    for (i = 0; i < LOAD_COUNT; i++)
-    {
-        if (state->loadEnabled[i])
-        {
-            value |= (1u << i);
-        }
-    }
+/* ----- Local queue for switch state ----- */
+static QueueHandle_t gSwitchQueue = NULL;
 
-    return value;
-}
+/*
+ * Stub: loads forced OFF by relay logic.
+ * Later this will be replaced by proper relay state / load control task.
+ *
+ * Bit = 1 -> relay is forcing that load OFF
+ * Bit = 0 -> relay allows that load
+ */
+static volatile uint32_t gRelayForcedOffMask = 0;
 
-uint32_t packGreenLEDsFromState(const SharedSystemState *state)
-{
-    uint32_t value = 0;
-    int i;
+/* ----- Local prototypes ----- */
+static void SwitchPollTask(void *pvParameters);
+static void RedLedTask(void *pvParameters);
+static void GreenBlinkTask(void *pvParameters);
 
-    for (i = 0; i < LOAD_COUNT; i++)
-    {
-        if (state->relayShed[i] && !state->maintenanceMode)
-        {
-            value |= (1u << i);
-        }
-    }
-
-    return value;
-}
-
-void initSharedState(void)
-{
-    int i;
-
-    memset(&gSystemState, 0, sizeof(gSystemState));
-    gSystemState.thresholdFreqHz = DEFAULT_FREQ_THRESHOLD_HZ;
-    gSystemState.thresholdROCOFHzPerSec = DEFAULT_ROCOF_THRESHOLD_HZPS;
-    gSystemState.mode = SYSTEM_NORMAL;
-    gSystemState.lastStateChangeTick = 0;
-
-    for (i = 0; i < LOAD_COUNT; i++)
-    {
-        gSystemState.switchState[i] = 0;
-        gSystemState.loadEnabled[i] = 0;
-        gSystemState.relayShed[i] = 0;
-    }
-}
-
-void initQueuesAndMutexes(void)
-{
-    qFrequencySamples      = xQueueCreate(16, sizeof(FrequencySampleMessage));
-    qFrequencyToROCOF      = xQueueCreate(16, sizeof(FrequencyMessage));
-    qFrequencyToDecision   = xQueueCreate(16, sizeof(FrequencyMessage));
-    qROCOFToDecision       = xQueueCreate(16, sizeof(ROCOFMessage));
-    qKeyboardToTask        = xQueueCreate(16, sizeof(KeyboardMessage));
-    qButtonToDecision      = xQueueCreate(8, sizeof(ButtonMessage));
-    qDecisionToLoadControl = xQueueCreate(16, sizeof(LoadCommandMessage));
-    qResponseMeasurements  = xQueueCreate(8, sizeof(ResponseMeasurementMessage));
-
-    gStateMutex = xSemaphoreCreateMutex();
-}
-
-void registerISRs(void)
-{
-    alt_irq_register(PUSH_BUTTON_IRQ, NULL, PushButtonISR);
-    alt_irq_register(FREQUENCY_ANALYSER_IRQ, NULL, FrequencyRelayISR);
-
-    /* Optional PS/2 keyboard ISR */
-    alt_irq_register(PS2_IRQ, NULL, KeyboardISR);
-
-    /* Enable push-button interrupt mask */
-    IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, 0);
-    IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PUSH_BUTTON_BASE, 0x7);
-}
-
-void createApplicationTasks(void)
-{
-    xTaskCreate(FrequencyTask,       "FrequencyTask",       TASK_STACKSIZE, NULL, FREQUENCY_TASK_PRIORITY,    &gFrequencyTaskHandle);
-    xTaskCreate(ROCOFTask,           "ROCOFTask",           TASK_STACKSIZE, NULL, ROCOF_TASK_PRIORITY,        NULL);
-    xTaskCreate(KeyboardTask,        "KeyboardTask",        TASK_STACKSIZE, NULL, KEYBOARD_TASK_PRIORITY,     &gKeyboardTaskHandle);
-    xTaskCreate(DecisionTask,        "DecisionTask",        TASK_STACKSIZE, NULL, DECISION_TASK_PRIORITY,     NULL);
-    xTaskCreate(LoadControlTask,     "LoadControlTask",     TASK_STACKSIZE, NULL, LOAD_CONTROL_TASK_PRIORITY, NULL);
-    xTaskCreate(ResponseTrackerTask, "ResponseTrackerTask", TASK_STACKSIZE, NULL, RESPONSE_TRACKER_PRIORITY,  NULL);
-    xTaskCreate(VGADisplayTask,      "VGADisplayTask",      TASK_STACKSIZE, NULL, VGA_DISPLAY_TASK_PRIORITY,  NULL);
-}
+static uint32_t getRelayForcedOffMask(void);
+static void setRelayForcedOffMask(uint32_t newMask);
 
 int main(void)
 {
-    initQueuesAndMutexes();
-    initSharedState();
-    registerISRs();
-    createApplicationTasks();
+    /* Simple queue for current switch snapshot */
+    gSwitchQueue = xQueueCreate(1, sizeof(uint32_t));
+    if (gSwitchQueue == NULL)
+    {
+        while (1) { }
+    }
+
+    xTaskCreate(
+        SwitchPollTask,
+        "SwitchPoll",
+        TASK_STACKSIZE,
+        NULL,
+        3,
+        NULL
+    );
+
+    xTaskCreate(
+        RedLedTask,
+        "RedLed",
+        TASK_STACKSIZE,
+        NULL,
+        2,
+        NULL
+    );
+
+    xTaskCreate(
+        GreenBlinkTask,
+        "GreenBlink",
+        TASK_STACKSIZE,
+        NULL,
+        1,
+        NULL
+    );
 
     vTaskStartScheduler();
 
     while (1) { }
 
     return 0;
+}
+
+/*
+ * Poll slide switches because they do not have IRQs.
+ * Sends latest switch state to the LED/output task.
+ */
+static void SwitchPollTask(void *pvParameters)
+{
+    uint32_t switchValue;
+
+    (void)pvParameters;
+
+    while (1)
+    {
+        switchValue = IORD_ALTERA_AVALON_PIO_DATA(SLIDE_SWITCH_BASE);
+
+        /* Keep only the load bits we care about */
+        switchValue &= ((1u << LOAD_COUNT) - 1u);
+
+        /*
+         * Queue length is 1, so overwrite keeps the latest state only.
+         * This is ideal for "current switch snapshot" style data.
+         */
+        xQueueOverwrite(gSwitchQueue, &switchValue);
+
+        vTaskDelay(pdMS_TO_TICKS(SWITCH_POLL_MS));
+    }
+}
+
+/*
+ * Red LEDs show loads that are requested ON by the switches
+ * and not forced OFF by relay logic.
+ */
+static void RedLedTask(void *pvParameters)
+{
+    uint32_t requestedLoads = 0;
+    uint32_t forcedOffMask;
+    uint32_t redLedOutput;
+
+    (void)pvParameters;
+
+    while (1)
+    {
+        xQueueReceive(gSwitchQueue, &requestedLoads, portMAX_DELAY);
+
+        forcedOffMask = getRelayForcedOffMask();
+
+        /*
+         * Load is ON only if:
+         * - switch requests it ON
+         * - relay is not forcing it OFF
+         */
+        redLedOutput = requestedLoads & (~forcedOffMask);
+        redLedOutput &= ((1u << LOAD_COUNT) - 1u);
+
+        IOWR_ALTERA_AVALON_PIO_DATA(RED_LEDS_BASE, redLedOutput);
+    }
+}
+
+/*
+ * Simple heartbeat so you can see FreeRTOS is alive.
+ * Later green LEDs will represent relay-shed loads instead.
+ */
+static void GreenBlinkTask(void *pvParameters)
+{
+    uint32_t ledPattern = 0;
+
+    (void)pvParameters;
+
+    while (1)
+    {
+        ledPattern ^= ((1u << LOAD_COUNT) - 1u);
+        IOWR_ALTERA_AVALON_PIO_DATA(GREEN_LEDS_BASE, ledPattern);
+
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+/* ----- Stub relay override helpers ----- */
+static uint32_t getRelayForcedOffMask(void)
+{
+    return gRelayForcedOffMask;
+}
+
+static void setRelayForcedOffMask(uint32_t newMask)
+{
+    gRelayForcedOffMask = newMask & ((1u << LOAD_COUNT) - 1u);
 }

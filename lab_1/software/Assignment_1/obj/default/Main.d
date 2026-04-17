@@ -1,4 +1,4 @@
-obj/default/Main.o: Main.c Main.h freertos/FreeRTOS.h \
+obj/default/main.o: main.c Main.h freertos/FreeRTOS.h \
  freertos/FreeRTOSConfig.h ../Assignment_1_bsp/system.h \
  ../Assignment_1_bsp/linker.h freertos/projdefs.h freertos/portable.h \
  freertos/deprecated_definitions.h freertos/portmacro.h \
@@ -9,8 +9,7 @@ obj/default/Main.o: Main.c Main.h freertos/FreeRTOS.h \
  freertos/mpu_wrappers.h freertos/task.h freertos/list.h freertos/queue.h \
  freertos/semphr.h freertos/queue.h ../Assignment_1_bsp//HAL/inc/io.h \
  ../Assignment_1_bsp//HAL/inc/alt_types.h \
- ../Assignment_1_bsp//drivers/inc/altera_avalon_pio_regs.h Task_1.h \
- Task_2.h Task_3.h Task_4.h
+ ../Assignment_1_bsp//drivers/inc/altera_avalon_pio_regs.h
 
 Main.h:
 
@@ -55,11 +54,3 @@ freertos/queue.h:
 ../Assignment_1_bsp//HAL/inc/alt_types.h:
 
 ../Assignment_1_bsp//drivers/inc/altera_avalon_pio_regs.h:
-
-Task_1.h:
-
-Task_2.h:
-
-Task_3.h:
-
-Task_4.h:

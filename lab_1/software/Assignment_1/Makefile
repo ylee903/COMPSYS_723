@@ -150,11 +150,8 @@ C_SRCS += FreeRTOS/port.c
 C_SRCS += FreeRTOS/queue.c
 C_SRCS += FreeRTOS/tasks.c
 C_SRCS += FreeRTOS/timers.c
-C_SRCS += Main.c
+C_SRCS += main.c
 C_SRCS += Task_1_Analyser.c
-C_SRCS += Task_2_Manager.c
-C_SRCS += Task_3_Tracker.c
-C_SRCS += Task_4_VGA.c
 CXX_SRCS :=
 ASM_SRCS := FreeRTOS/port_asm.S
 

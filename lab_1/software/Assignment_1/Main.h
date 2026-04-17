@@ -23,22 +23,19 @@
 #define LOAD_COUNT 5
 #define TASK_STACKSIZE 2048
 
-#define FREQUENCY_TASK_PRIORITY        15
-#define ROCOF_TASK_PRIORITY            14
-#define KEYBOARD_TASK_PRIORITY         13
-#define DECISION_TASK_PRIORITY         12
-#define LOAD_CONTROL_TASK_PRIORITY     11
-#define RESPONSE_TRACKER_PRIORITY      10
-#define VGA_DISPLAY_TASK_PRIORITY       9
+#define FREQUENCY_TASK_PRIORITY         15
+#define ROCOF_TASK_PRIORITY             14
+#define KEYBOARD_TASK_PRIORITY          13
+#define DECISION_TASK_PRIORITY          12
+#define LOAD_CONTROL_TASK_PRIORITY      11
+#define RESPONSE_TRACKER_PRIORITY       10
+#define VGA_DISPLAY_TASK_PRIORITY        9
 
 #define DEFAULT_FREQ_THRESHOLD_HZ       49.0f
 #define DEFAULT_ROCOF_THRESHOLD_HZPS     1.0f
 
 #define FIRST_SHED_DEADLINE_MS         200
 #define MANAGE_WINDOW_MS               500
-
-#define VGA_CHAR_COLS                   80
-#define VGA_CHAR_ROWS                   60
 
 typedef enum
 {
@@ -57,19 +54,14 @@ typedef struct
 {
     float frequencyHz;
     uint32_t sampleCount;
-    uint32_t tickStamp;
+    TickType_t tickStamp;
 } FrequencyMessage;
 
 typedef struct
 {
     float rocofHzPerSec;
-    uint32_t tickStamp;
+    TickType_t tickStamp;
 } ROCOFMessage;
-
-typedef struct
-{
-    uint8_t rawByte;
-} KeyboardMessage;
 
 typedef struct
 {
@@ -88,13 +80,13 @@ typedef enum
 typedef struct
 {
     LoadCommandType type;
-    uint32_t tickStamp;
+    TickType_t tickStamp;
 } LoadCommandMessage;
 
 typedef struct
 {
-    uint32_t detectionTick;
-    uint32_t shedTick;
+    TickType_t detectionTick;
+    TickType_t shedTick;
 } ResponseMeasurementMessage;
 
 typedef struct
@@ -112,17 +104,15 @@ typedef struct
     SystemMode mode;
     uint8_t maintenanceMode;
 
-    uint32_t lastStateChangeTick;
-    uint32_t instabilityDetectedTick;
+    TickType_t lastStateChangeTick;
+    TickType_t instabilityDetectedTick;
     uint8_t waitingForFirstShed;
 } SharedSystemState;
 
-/* Global RTOS objects */
 extern QueueHandle_t qFrequencySamples;
 extern QueueHandle_t qFrequencyToROCOF;
 extern QueueHandle_t qFrequencyToDecision;
 extern QueueHandle_t qROCOFToDecision;
-extern QueueHandle_t qKeyboardToTask;
 extern QueueHandle_t qButtonToDecision;
 extern QueueHandle_t qDecisionToLoadControl;
 extern QueueHandle_t qResponseMeasurements;
@@ -130,19 +120,6 @@ extern QueueHandle_t qResponseMeasurements;
 extern SemaphoreHandle_t gStateMutex;
 extern SharedSystemState gSystemState;
 
-/* Task handles */
-extern TaskHandle_t gFrequencyTaskHandle;
-extern TaskHandle_t gKeyboardTaskHandle;
-
-/* Main helpers */
-void initSharedState(void);
-void initQueuesAndMutexes(void);
-void registerISRs(void);
-void createApplicationTasks(void);
-
-/* Utility helpers */
 float absf_local(float x);
-uint32_t packRedLEDsFromState(const SharedSystemState *state);
-uint32_t packGreenLEDsFromState(const SharedSystemState *state);
 
 #endif
