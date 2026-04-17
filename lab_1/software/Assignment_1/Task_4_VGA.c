@@ -3,6 +3,7 @@
 static void VGA_clear(void)
 {
     int x, y;
+
     for (y = 0; y < VGA_CHAR_ROWS; y++)
     {
         for (x = 0; x < VGA_CHAR_COLS; x++)
@@ -19,6 +20,7 @@ static void VGA_clear(void)
 static void VGA_writeString(int col, int row, const char *text)
 {
     int i = 0;
+
     while (text[i] != '\0')
     {
         IOWR_8DIRECT(
@@ -46,8 +48,7 @@ void VGADisplayTask(void *pvParameters)
 
         VGA_clear();
 
-        sprintf(line, "LCFR Assignment 1");
-        VGA_writeString(0, 0, line);
+        VGA_writeString(0, 0, "LCFR Assignment 1");
 
         sprintf(line, "Freq: %.2f Hz", localCopy.frequencyHz);
         VGA_writeString(0, 2, line);
@@ -69,6 +70,7 @@ void VGADisplayTask(void *pvParameters)
         VGA_writeString(0, 8, line);
 
         VGA_writeString(0, 10, "Loads:");
+
         for (i = 0; i < LOAD_COUNT; i++)
         {
             sprintf(line,
