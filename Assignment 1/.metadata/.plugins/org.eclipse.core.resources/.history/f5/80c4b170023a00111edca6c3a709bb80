@@ -1,0 +1,6 @@
+#include "shared_state.h"
+
+unsigned int userRequestedLoads = 0;
+unsigned int relayShedLoads = 0;
+unsigned int actualLoads = 0;
+unsigned int maintenanceMode = 0;

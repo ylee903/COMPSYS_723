@@ -1,0 +1,48 @@
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/semphr.h"
+#include "shared_state.h"
+
+#include "system.h"
+#include "altera_avalon_pio_regs.h"
+
+void LoadControlTask(void *pvParameters)
+{
+    unsigned int requested;
+    unsigned int shed;
+    unsigned int maintenance;
+    unsigned int actual;
+    unsigned int redLeds;
+    unsigned int greenLeds;
+
+    while (1)
+    {
+        if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            requested = userRequestedLoads;
+            shed = relayShedLoads;
+            maintenance = maintenanceMode;
+
+            if (maintenance)
+            {
+                actual = requested;
+                greenLeds = 0;
+            }
+            else
+            {
+                actual = requested & (~shed);
+                greenLeds = shed & 0x1F;
+            }
+
+            actualLoads = actual;
+            redLeds = actual & 0x1F;
+
+            xSemaphoreGive(sharedStateMutex);
+        }
+
+        IOWR_ALTERA_AVALON_PIO_DATA(LEDR_BASE, redLeds);   // replace with actual LED base
+        IOWR_ALTERA_AVALON_PIO_DATA(LEDG_BASE, greenLeds); // replace with actual LED base
+
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+}

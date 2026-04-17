@@ -1,0 +1,76 @@
+#include <stdio.h>
+
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/queue.h"
+#include "FreeRTOS/semphr.h"
+#include "FreeRTOS/timers.h"
+#include "shared_state.h"
+
+/* Task prototypes */
+void FrequencyTask(void *pvParameters);
+void ROCOFTask(void *pvParameters);
+void DecisionTask(void *pvParameters);
+void LoadControlTask(void *pvParameters);
+void SwitchPollTask(void *pvParameters);
+void KeyboardTask(void *pvParameters);
+void VGATask(void *pvParameters);
+
+/* Task priorities */
+#define PRIORITY_DECISION      (tskIDLE_PRIORITY + 5)
+#define PRIORITY_FREQ          (tskIDLE_PRIORITY + 4)
+#define PRIORITY_ROCOF         (tskIDLE_PRIORITY + 4)
+#define PRIORITY_LOAD          (tskIDLE_PRIORITY + 3)
+#define PRIORITY_SWITCH        (tskIDLE_PRIORITY + 2)
+#define PRIORITY_KEYBOARD      (tskIDLE_PRIORITY + 2)
+#define PRIORITY_VGA           (tskIDLE_PRIORITY + 1)
+
+/* Global queues */
+QueueHandle_t freqQueue = NULL;
+QueueHandle_t rocofQueue = NULL;
+QueueHandle_t switchQueue = NULL;
+QueueHandle_t thresholdQueue = NULL;
+QueueHandle_t loadCommandQueue = NULL;
+
+/* Global synchronisation objects */
+SemaphoreHandle_t maintenanceSemaphore = NULL;
+SemaphoreHandle_t analyserSemaphore = NULL;
+
+/* Global timer */
+TimerHandle_t managementTimer = NULL;
+
+int main(void)
+{
+    printf("LCFR starting...\n");
+
+    /* Create queues */
+    freqQueue = xQueueCreate(8, sizeof(unsigned int));
+    rocofQueue = xQueueCreate(8, sizeof(float));
+    switchQueue = xQueueCreate(8, sizeof(unsigned int));
+    thresholdQueue = xQueueCreate(4, sizeof(unsigned int));
+    loadCommandQueue = xQueueCreate(8, sizeof(unsigned int));
+
+    /* Create semaphores and mutex */
+    maintenanceSemaphore = xSemaphoreCreateBinary();
+    analyserSemaphore = xSemaphoreCreateBinary();
+    sharedStateMutex = xSemaphoreCreateMutex();
+
+    /* Create tasks */
+    xTaskCreate(DecisionTask,    "Decision", 2048, NULL, PRIORITY_DECISION, NULL);
+    xTaskCreate(FrequencyTask,   "Freq",     1024, NULL, PRIORITY_FREQ, NULL);
+    xTaskCreate(ROCOFTask,       "ROCOF",    1024, NULL, PRIORITY_ROCOF, NULL);
+    xTaskCreate(LoadControlTask, "Load",     1024, NULL, PRIORITY_LOAD, NULL);
+    xTaskCreate(SwitchPollTask,  "Switch",   1024, NULL, PRIORITY_SWITCH, NULL);
+    xTaskCreate(KeyboardTask,    "Keyboard", 1024, NULL, PRIORITY_KEYBOARD, NULL);
+    xTaskCreate(VGATask,         "VGA",      2048, NULL, PRIORITY_VGA, NULL);
+
+    /* Start scheduler */
+    vTaskStartScheduler();
+
+    /* Should never get here */
+    while (1)
+    {
+    }
+
+    return 0;
+}

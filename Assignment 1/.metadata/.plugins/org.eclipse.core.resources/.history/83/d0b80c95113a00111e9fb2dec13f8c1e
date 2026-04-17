@@ -1,0 +1,60 @@
+#include "isr_handlers.h"
+
+#include "system.h"
+#include "io.h"
+#include "sys/alt_irq.h"
+#include "altera_avalon_pio_regs.h"
+#include "altera_up_avalon_ps2.h"
+
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/queue.h"
+#include "FreeRTOS/semphr.h"
+
+/* Created in main.c */
+extern QueueHandle_t freqQueue;          /* unsigned int sample count */
+extern QueueHandle_t thresholdQueue;     /* unsigned char key code */
+
+extern SemaphoreHandle_t maintenanceSemaphore;
+
+void FrequencyAnalyserISR(void *context)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    unsigned int sampleCount;
+
+    /* Read analyser output: number of ADC samples between peaks */
+    sampleCount = IORD(FREQUENCY_ANALYSER_BASE, 0);
+
+    /* Send sample count to FrequencyTask */
+    xQueueSendFromISR(freqQueue, &sampleCount, &xHigherPriorityTaskWoken);
+
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
+
+void PushButtonISR(void *context)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    unsigned int edgeCapture;
+
+    /* Read and clear button edge capture */
+    edgeCapture = IORD_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE);
+    IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, edgeCapture);
+
+    /* Notify task that maintenance button was pressed */
+    xSemaphoreGiveFromISR(maintenanceSemaphore, &xHigherPriorityTaskWoken);
+
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
+
+void KeyboardISR(void *context, alt_u32 id)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    unsigned char key = 0;
+
+    /* Decode one scancode byte */
+    decode_scancode(context, NULL, &key, NULL);
+
+    /* Send key to KeyboardTask */
+    xQueueSendFromISR(thresholdQueue, &key, &xHigherPriorityTaskWoken);
+
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
