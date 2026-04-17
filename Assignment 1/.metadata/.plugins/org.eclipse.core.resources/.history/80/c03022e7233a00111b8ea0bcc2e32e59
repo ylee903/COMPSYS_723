@@ -50,15 +50,14 @@ void DecisionTask(void *pvParameters)
 
     while (1)
     {
-    	if (xSemaphoreTake(maintenanceSemaphore, 0) == pdTRUE)
-    	{
-    	    if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
-    	    {
-    	        maintenanceMode = !maintenanceMode;
-    	        printf("BUTTON PRESS -> maintenanceMode = %u\n", maintenanceMode);
-    	        xSemaphoreGive(sharedStateMutex);
-    	    }
-    	}
+        if (xSemaphoreTake(maintenanceSemaphore, 0) == pdTRUE)
+        {
+            if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
+            {
+                maintenanceMode = !maintenanceMode;
+                xSemaphoreGive(sharedStateMutex);
+            }
+        }
 
         if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
         {

@@ -77,11 +77,8 @@ int main(void)
     }
 
     /* Clear any stale push-button edge first, then enable ISR */
-    IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, 0x7);
-    IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PUSH_BUTTON_BASE, 0x4);
-
-    /* Register push-button ISR */
-    alt_irq_register(PUSH_BUTTON_IRQ, NULL, PushButtonISR);
+    IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, 0x8);
+    IOWR_ALTERA_AVALON_PIO_IRQ_MASK(PUSH_BUTTON_BASE, 0x8);
 
     /* Register analyser ISR */
     alt_irq_register(FREQUENCY_ANALYSER_IRQ, NULL, FrequencyAnalyserISR);

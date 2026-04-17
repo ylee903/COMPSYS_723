@@ -42,7 +42,7 @@ void PushButtonISR(void *context)
     IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, edgeCapture);
 
     /* Only respond to KEY3 */
-    if (edgeCapture & 0x4)
+    if (edgeCapture & 0x8)
     {
         xSemaphoreGiveFromISR(maintenanceSemaphore, &xHigherPriorityTaskWoken);
     }

@@ -35,14 +35,10 @@ void PushButtonISR(void *context)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     unsigned int edgeCapture;
 
-    /* Read which button was pressed */
     edgeCapture = IORD_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE);
-
-    /* Clear interrupt */
     IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PUSH_BUTTON_BASE, edgeCapture);
 
-    /* Only respond to KEY3 */
-    if (edgeCapture & 0x4)
+    if (edgeCapture & 0x8)   /* KEY3 */
     {
         xSemaphoreGiveFromISR(maintenanceSemaphore, &xHigherPriorityTaskWoken);
     }

@@ -1,6 +1,6 @@
-17:36:38 **** Clean-only build of configuration Nios II for project Assignment1 ****
+18:27:37 **** Clean-only build of configuration Nios II for project Assignment1 ****
 make clean 
 [Assignment1 clean complete]
 
-17:36:38 Build Finished (took 723ms)
+18:27:37 Build Finished (took 209ms)
 
