@@ -1,0 +1,18 @@
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/semphr.h"
+#include "shared_state.h"
+
+void DecisionTask(void *pvParameters)
+{
+    while (1)
+    {
+        if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            relayShedLoads = 0x01;   // temporarily shed load 0
+            xSemaphoreGive(sharedStateMutex);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}

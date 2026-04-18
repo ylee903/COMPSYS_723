@@ -1,0 +1,10 @@
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+
+void DecisionTask(void *pvParameters)
+{
+    while (1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}

@@ -1,0 +1,33 @@
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/semphr.h"
+#include "shared_state.h"
+
+void DecisionTask(void *pvParameters)
+{
+    while (1)
+    {
+        if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            if (maintenanceMode)
+            {
+                relayShedLoads = 0;
+            }
+            else
+            {
+                if (userRequestedLoads & 0x01)
+                {
+                    relayShedLoads = 0x01;   // only shed load 0 if SW0 is requested on
+                }
+                else
+                {
+                    relayShedLoads = 0x00;   // otherwise no shed
+                }
+            }
+
+            xSemaphoreGive(sharedStateMutex);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}

@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+#include "FreeRTOS/semphr.h"
+#include "shared_state.h"
+
+#include "system.h"
+#include "altera_up_avalon_video_pixel_buffer_dma.h"
+
+#define SCREEN_WIDTH    320
+#define SCREEN_HEIGHT   240
+
+#define GRAPH_X0        30
+#define GRAPH_Y0        20
+#define GRAPH_WIDTH     260
+#define GRAPH_HEIGHT    70
+
+#define HISTORY_LEN     GRAPH_WIDTH
+
+static alt_up_pixel_buffer_dma_dev *pixel_buffer_dev = NULL;
+static float freqHistory[HISTORY_LEN];
+static int historyIndex = 0;
+static int historyFilled = 0;
+
+static void plot_pixel(int x, int y, short colour)
+{
+    if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT)
+    {
+        alt_up_pixel_buffer_dma_draw(pixel_buffer_dev, colour, x, y);
+    }
+}
+
+static void draw_line(int x1, int y1, int x2, int y2, short colour)
+{
+    alt_up_pixel_buffer_dma_draw_line(pixel_buffer_dev, x1, y1, x2, y2, colour, 0);
+}
+
+static void clear_screen(void)
+{
+    alt_up_pixel_buffer_dma_clear_screen(pixel_buffer_dev, 0);
+}
+
+static int map_freq_to_y(float freq)
+{
+    float minFreq = 45.0f;
+    float maxFreq = 55.0f;
+
+    if (freq < minFreq) freq = minFreq;
+    if (freq > maxFreq) freq = maxFreq;
+
+    return GRAPH_Y0 + GRAPH_HEIGHT
+         - (int)(((freq - minFreq) / (maxFreq - minFreq)) * GRAPH_HEIGHT);
+}
+
+static void draw_axes_and_threshold(float freqThreshold)
+{
+    int yThresh;
+
+    /* Axes */
+    draw_line(GRAPH_X0, GRAPH_Y0, GRAPH_X0, GRAPH_Y0 + GRAPH_HEIGHT, 0x7BEF);
+    draw_line(GRAPH_X0, GRAPH_Y0 + GRAPH_HEIGHT, GRAPH_X0 + GRAPH_WIDTH, GRAPH_Y0 + GRAPH_HEIGHT, 0x7BEF);
+
+    /* Small y-axis ticks */
+    draw_line(GRAPH_X0 - 5, GRAPH_Y0, GRAPH_X0, GRAPH_Y0, 0x7BEF);
+    draw_line(GRAPH_X0 - 5, GRAPH_Y0 + GRAPH_HEIGHT / 2, GRAPH_X0, GRAPH_Y0 + GRAPH_HEIGHT / 2, 0x7BEF);
+    draw_line(GRAPH_X0 - 5, GRAPH_Y0 + GRAPH_HEIGHT, GRAPH_X0, GRAPH_Y0 + GRAPH_HEIGHT, 0x7BEF);
+
+    /* Threshold line */
+    yThresh = map_freq_to_y(freqThreshold);
+    draw_line(GRAPH_X0, yThresh, GRAPH_X0 + GRAPH_WIDTH, yThresh, 0xF800); /* red */
+}
+
+static void draw_frequency_trace(void)
+{
+    int count;
+    int i;
+    int idx1, idx2;
+    int x1, x2;
+    int y1, y2;
+
+    count = historyFilled ? HISTORY_LEN : historyIndex;
+
+    if (count < 2)
+        return;
+
+    for (i = 0; i < count - 1; i++)
+    {
+        idx1 = (historyFilled ? historyIndex : 0) + i;
+        idx2 = idx1 + 1;
+
+        idx1 %= HISTORY_LEN;
+        idx2 %= HISTORY_LEN;
+
+        x1 = GRAPH_X0 + i;
+        x2 = GRAPH_X0 + i + 1;
+
+        y1 = map_freq_to_y(freqHistory[idx1]);
+        y2 = map_freq_to_y(freqHistory[idx2]);
+
+        draw_line(x1, y1, x2, y2, 0x001F); /* blue */
+    }
+}
+
+void VGATask(void *pvParameters)
+{
+    float freq;
+    float freqThreshold;
+
+    pixel_buffer_dev = alt_up_pixel_buffer_dma_open_dev(PIXEL_BUFFER_DMA_NAME);
+    if (pixel_buffer_dev == NULL)
+    {
+        while (1)
+        {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+
+    clear_screen();
+
+    while (1)
+    {
+        if (xSemaphoreTake(sharedStateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            freq = currentFrequencyHz;
+            freqThreshold = frequencyThreshold;
+            xSemaphoreGive(sharedStateMutex);
+        }
+
+        freqHistory[historyIndex] = freq;
+        historyIndex++;
+
+        if (historyIndex >= HISTORY_LEN)
+        {
+            historyIndex = 0;
+            historyFilled = 1;
+        }
+
+        clear_screen();
+        draw_axes_and_threshold(freqThreshold);
+        draw_frequency_trace();
+
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}

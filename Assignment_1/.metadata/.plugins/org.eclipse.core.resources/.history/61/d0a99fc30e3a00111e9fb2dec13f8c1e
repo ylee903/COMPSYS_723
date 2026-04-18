@@ -1,0 +1,12 @@
+#include "shared_state.h"
+
+SemaphoreHandle_t sharedStateMutex = NULL;
+
+unsigned int userRequestedLoads = 0;
+unsigned int allowedLoads = 0;
+unsigned int relayShedLoads = 0;
+unsigned int actualLoads = 0;
+unsigned int maintenanceMode = 0;
+
+unsigned int systemUnstable = 1;   // TEMP: start unstable for testing
+unsigned int managingLoads = 0;
