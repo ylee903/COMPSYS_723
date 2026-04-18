@@ -108,7 +108,7 @@ void DecisionTask(void *pvParameters)
             /* Arm timing when instability first occurs */
             if (unstable && !timingArmed)
             {
-                detectionTick = xTaskGetTickCount();
+                detectionTick = lastAnalyserIsrTick;
                 timingArmed = 1;
                 firstShedDone = 0;
             }

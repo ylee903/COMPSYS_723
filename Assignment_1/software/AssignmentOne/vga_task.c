@@ -20,19 +20,19 @@
 #define ROCPLT_ORI_X        101
 #define ROCPLT_GRID_SIZE_X  5
 #define ROCPLT_ORI_Y 		300.0
-#define ROCPLT_ROC_RES      0.5
+#define ROCPLT_ROC_RES      2.0
 
 #define MIN_FREQ            45.0
 #define MAX_FREQ            55.0
 
 #define HISTORY_POINTS      100
 
-#define FREQ_THRESH_ROW     41
-#define ROCOF_THRESH_ROW    43
-#define RECENT_VALUES_ROW   45
-#define AVG_TIME_ROW        47
-#define MAX_TIME_ROW        49
-#define MIN_TIME_ROW        51
+#define FREQ_THRESH_ROW     44
+#define ROCOF_THRESH_ROW    46
+#define RECENT_VALUES_ROW   48
+#define AVG_TIME_ROW        50
+#define MAX_TIME_ROW        52
+#define MIN_TIME_ROW        54
 
 typedef struct {
     unsigned int x1;
@@ -94,11 +94,11 @@ void VGATask(void *pvParameters)
     alt_up_char_buffer_string(char_buf, "45", 10, 17);
 
     alt_up_char_buffer_string(char_buf, "Rate of Change (dF/dt Hz/s)", 3, 28);
-    alt_up_char_buffer_string(char_buf, "60", 10, 33);
-    alt_up_char_buffer_string(char_buf, "30", 10, 35);
+    alt_up_char_buffer_string(char_buf, "30", 10, 33);
+    alt_up_char_buffer_string(char_buf, "15", 10, 35);
     alt_up_char_buffer_string(char_buf, "0", 10, 37);
-    alt_up_char_buffer_string(char_buf, "-30", 9, 39);
-    alt_up_char_buffer_string(char_buf, "-60", 9, 41);
+    alt_up_char_buffer_string(char_buf, "-15", 9, 39);
+    alt_up_char_buffer_string(char_buf, "-30", 9, 41);
 
     /* --- Top row --- */
     alt_up_char_buffer_string(char_buf, "System:", 5, 2);

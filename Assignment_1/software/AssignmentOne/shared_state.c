@@ -16,6 +16,7 @@ float currentROCOF = 0.0f;
 float frequencyThreshold = 48.5f;
 float rocofThreshold = 20.0f;
 
+TickType_t lastAnalyserIsrTick = 0;
 TickType_t detectionTick = 0;
 TickType_t firstShedTick = 0;
 unsigned int timingArmed = 0;

@@ -4,7 +4,7 @@
 #include "FreeRTOS/FreeRTOS.h"
 #include "FreeRTOS/semphr.h"
 
-#define RECENT_TIMES_COUNT 5U
+#define RECENT_TIMES_COUNT 5
 
 extern SemaphoreHandle_t sharedStateMutex;
 
@@ -22,6 +22,7 @@ extern float currentROCOF;
 extern float frequencyThreshold;
 extern float rocofThreshold;
 
+extern TickType_t lastAnalyserIsrTick;
 extern TickType_t detectionTick;
 extern TickType_t firstShedTick;
 extern unsigned int timingArmed;

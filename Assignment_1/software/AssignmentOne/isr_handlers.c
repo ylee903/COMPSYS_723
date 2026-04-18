@@ -1,4 +1,5 @@
 #include "isr_handlers.h"
+#include "shared_state.h"
 
 #include "system.h"
 #include "io.h"
@@ -9,6 +10,7 @@
 #include "FreeRTOS/FreeRTOS.h"
 #include "FreeRTOS/queue.h"
 #include "FreeRTOS/semphr.h"
+#include "FreeRTOS/task.h"
 
 /* Created in main.c */
 extern QueueHandle_t freqQueue;          /* unsigned int sample count */
@@ -21,10 +23,10 @@ void FrequencyAnalyserISR(void *context)
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     unsigned int sampleCount;
 
-    /* Read analyser output: number of ADC samples between peaks */
+    lastAnalyserIsrTick = xTaskGetTickCountFromISR();
+
     sampleCount = IORD(FREQUENCY_ANALYSER_BASE, 0);
 
-    /* Send sample count to FrequencyTask */
     xQueueSendFromISR(freqQueue, &sampleCount, &xHigherPriorityTaskWoken);
 
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);

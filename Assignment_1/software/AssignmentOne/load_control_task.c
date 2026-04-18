@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "FreeRTOS/FreeRTOS.h"
 #include "FreeRTOS/task.h"
 #include "FreeRTOS/semphr.h"
@@ -6,14 +8,14 @@
 #include "system.h"
 #include "altera_avalon_pio_regs.h"
 
-static void record_first_shed_delay(TickType_t nowTick)
+static void record_first_shed_actuation_delay(TickType_t nowTick)
 {
-    unsigned int dt_ms =
-        (unsigned int)((nowTick - detectionTick) * portTICK_PERIOD_MS);
+    unsigned int dt_ms;
 
+    dt_ms = (unsigned int)((nowTick - detectionTick) * portTICK_PERIOD_MS);
     firstShedTick = nowTick;
 
-    printf("FIRST SHED OUTPUT DELAY = %u ms\n", dt_ms);
+    printf("ISR TO FIRST SHED ACTUATION DELAY = %u ms\n", dt_ms);
 
     recentTimes[recentIndex] = dt_ms;
     recentIndex = (recentIndex + 1U) % RECENT_TIMES_COUNT;
@@ -47,7 +49,7 @@ void LoadControlTask(void *pvParameters)
     unsigned int actual;
     unsigned int redLeds;
     unsigned int greenLeds;
-    unsigned int prevActual = 0xFFFFFFFFU;
+    TickType_t nowTick;
 
     while (1)
     {
@@ -72,17 +74,11 @@ void LoadControlTask(void *pvParameters)
             actualLoads = actual;
             redLeds = actual & 0x1F;
 
-            if (!maintenance && timingArmed && !firstShedDone)
+            if (!maintenance && timingArmed && !firstShedDone && (shed != 0))
             {
-                if ((prevActual != 0xFFFFFFFFU) &&
-                    (actual != prevActual) &&
-                    (shed != 0U))
-                {
-                    record_first_shed_delay(xTaskGetTickCount());
-                }
+                nowTick = xTaskGetTickCount();
+                record_first_shed_actuation_delay(nowTick);
             }
-
-            prevActual = actual;
 
             xSemaphoreGive(sharedStateMutex);
         }
