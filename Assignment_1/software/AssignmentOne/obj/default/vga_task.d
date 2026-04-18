@@ -8,10 +8,13 @@ obj/default/vga_task.o: vga_task.c FreeRTOS/FreeRTOS.h \
  ../AssignmentOne_bsp//HAL/inc/priv/alt_legacy_irq.h \
  FreeRTOS/mpu_wrappers.h FreeRTOS/task.h FreeRTOS/list.h \
  FreeRTOS/semphr.h FreeRTOS/queue.h shared_state.h \
- ../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_pixel_buffer_dma.h \
+ ../AssignmentOne_bsp//HAL/inc/io.h \
+ ../AssignmentOne_bsp//HAL/inc/alt_types.h \
+ ../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_character_buffer_with_dma.h \
  ../AssignmentOne_bsp//HAL/inc/sys/alt_dev.h \
  ../AssignmentOne_bsp//HAL/inc/sys/alt_llist.h \
- ../AssignmentOne_bsp//HAL/inc/priv/alt_dev_llist.h
+ ../AssignmentOne_bsp//HAL/inc/priv/alt_dev_llist.h \
+ ../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_pixel_buffer_dma.h
 
 FreeRTOS/FreeRTOS.h:
 
@@ -49,10 +52,16 @@ FreeRTOS/queue.h:
 
 shared_state.h:
 
-../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_pixel_buffer_dma.h:
+../AssignmentOne_bsp//HAL/inc/io.h:
+
+../AssignmentOne_bsp//HAL/inc/alt_types.h:
+
+../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_character_buffer_with_dma.h:
 
 ../AssignmentOne_bsp//HAL/inc/sys/alt_dev.h:
 
 ../AssignmentOne_bsp//HAL/inc/sys/alt_llist.h:
 
 ../AssignmentOne_bsp//HAL/inc/priv/alt_dev_llist.h:
+
+../AssignmentOne_bsp//drivers/inc/altera_up_avalon_video_pixel_buffer_dma.h:
