@@ -93,17 +93,19 @@ void VGATask(void *pvParameters)
     alt_up_char_buffer_string(char_buf, "-30", 9, 34);
     alt_up_char_buffer_string(char_buf, "-60", 9, 36);
 
-    alt_up_char_buffer_string(char_buf, "System Status:", 25, 4);
-    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 25, 6);
-    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 25, 8);
-    alt_up_char_buffer_string(char_buf, "Active Time:", 25, 10);
+    /* --- Top row --- */
+    alt_up_char_buffer_string(char_buf, "System:", 5, 2);
+    alt_up_char_buffer_string(char_buf, "Loads:", 30, 2);
+    alt_up_char_buffer_string(char_buf, "Active:", 55, 2);
 
-    alt_up_char_buffer_string(char_buf, "Average Time:", 48, 4);
-    alt_up_char_buffer_string(char_buf, "Max Time:", 48, 6);
-    alt_up_char_buffer_string(char_buf, "Min Time:", 48, 8);
-    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 48, 10);
+    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 5, 41);
+    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 5, 43);
 
-    alt_up_char_buffer_string(char_buf, "Load Status:", 25, 12);
+    /* --- Measurements (your existing block) --- */
+    alt_up_char_buffer_string(char_buf, "Average Time:", 5, 45);
+    alt_up_char_buffer_string(char_buf, "Max Time:", 5, 47);
+    alt_up_char_buffer_string(char_buf, "Min Time:", 5, 49);
+    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 30, 45);
 
     for (j = 0; j < HISTORY_POINTS; j++)
     {
@@ -189,44 +191,56 @@ void VGATask(void *pvParameters)
         }
 
         /* Update text fields */
+
+        /* --- Top row values --- */
         if (maintenance)
         {
-            alt_up_char_buffer_string(char_buf, "Maintenance ", 40, 4);
+            alt_up_char_buffer_string(char_buf, "Maint      ", 13, 2);
         }
         else if (managing)
         {
-            alt_up_char_buffer_string(char_buf, "Managing    ", 40, 4);
+            alt_up_char_buffer_string(char_buf, "Managing   ", 13, 2);
         }
         else if (unstable)
         {
-            alt_up_char_buffer_string(char_buf, "Unstable    ", 40, 4);
+            alt_up_char_buffer_string(char_buf, "Unstable   ", 13, 2);
         }
         else
         {
-            alt_up_char_buffer_string(char_buf, "Stable      ", 40, 4);
+            alt_up_char_buffer_string(char_buf, "Stable     ", 13, 2);
         }
 
-        sprintf(buffer, "%5.2f Hz   ", freqThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 42, 6);
-
-        sprintf(buffer, "%5.2f Hz/s ", rocofThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 42, 8);
+        sprintf(buffer, "[%c][%c][%c][%c][%c]   ",
+                (loads & (1U << 0)) ? '1' : '0',
+                (loads & (1U << 1)) ? '1' : '0',
+                (loads & (1U << 2)) ? '1' : '0',
+                (loads & (1U << 3)) ? '1' : '0',
+                (loads & (1U << 4)) ? '1' : '0');
+        alt_up_char_buffer_string(char_buf, buffer, 37, 2);
 
         {
             unsigned int activeSec =
                 (unsigned int)((xTaskGetTickCount() - startTick) * portTICK_PERIOD_MS / 1000U);
-            sprintf(buffer, "%u s     ", activeSec);
-            alt_up_char_buffer_string(char_buf, buffer, 39, 10);
+            sprintf(buffer, "%u s      ", activeSec);
+            alt_up_char_buffer_string(char_buf, buffer, 63, 2);
         }
 
+        /* --- Bottom threshold block --- */
+        sprintf(buffer, "%5.2f Hz   ", freqThresh);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 41);
+
+        sprintf(buffer, "%5.2f Hz/s ", rocofThresh);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 43);
+
+        /* --- Bottom measurement block --- */
         sprintf(buffer, "%u ms   ", (measCount > 0) ? (totalT / measCount) : 0);
-        alt_up_char_buffer_string(char_buf, buffer, 63, 4);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 45);
 
         sprintf(buffer, "%u ms   ", maxT == 0 ? 0 : maxT);
-        alt_up_char_buffer_string(char_buf, buffer, 58, 6);
+        alt_up_char_buffer_string(char_buf, buffer, 16, 47);
 
         sprintf(buffer, "%u ms   ", (minT == 0xFFFFFFFF) ? 0 : minT);
-        alt_up_char_buffer_string(char_buf, buffer, 58, 8);
+        alt_up_char_buffer_string(char_buf, buffer, 16, 49);
 
         sprintf(buffer, "%u %u %u %u %u      ",
                 recent[(recentIdx + 0) % 5],
@@ -234,15 +248,7 @@ void VGATask(void *pvParameters)
                 recent[(recentIdx + 2) % 5],
                 recent[(recentIdx + 3) % 5],
                 recent[(recentIdx + 4) % 5]);
-        alt_up_char_buffer_string(char_buf, buffer, 63, 10);
-
-        sprintf(buffer, "[%c] [%c] [%c] [%c] [%c]      ",
-                (loads & (1U << 0)) ? '1' : '0',
-                (loads & (1U << 1)) ? '1' : '0',
-                (loads & (1U << 2)) ? '1' : '0',
-                (loads & (1U << 3)) ? '1' : '0',
-                (loads & (1U << 4)) ? '1' : '0');
-        alt_up_char_buffer_string(char_buf, buffer, 39, 12);
+        alt_up_char_buffer_string(char_buf, buffer, 48, 45);
 
         vTaskDelay(pdMS_TO_TICKS(250));
     }
