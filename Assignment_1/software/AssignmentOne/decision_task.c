@@ -10,6 +10,12 @@
 
 extern SemaphoreHandle_t maintenanceSemaphore;
 
+static void reset_timing_flags(void)
+{
+    timingArmed = 0;
+    firstShedDone = 0;
+}
+
 static int find_lowest_priority_on_not_shed(unsigned int allowed, unsigned int shed)
 {
     int i;
@@ -78,8 +84,7 @@ void DecisionTask(void *pvParameters)
                 allowedLoads = requested;
                 prevUnstable = 0;
 
-                timingArmed = 0;
-                firstShedDone = 0;
+                reset_timing_flags();
 
                 printf("MAINT | Freq=%.2f Hz | ROCOF=%.2f | Fth=%.2f | Rth=%.2f\n",
                        currentFrequencyHz, currentROCOF,
@@ -103,7 +108,7 @@ void DecisionTask(void *pvParameters)
             /* Arm timing when instability first occurs */
             if (unstable && !timingArmed)
             {
-                detectionTick = now;
+                detectionTick = xTaskGetTickCount();
                 timingArmed = 1;
                 firstShedDone = 0;
             }
@@ -132,42 +137,6 @@ void DecisionTask(void *pvParameters)
                         shed |= (1U << loadToShed);
                         managingLoads = 1;
                         observationStartTick = now;
-
-                        /* Measure detection -> first shed delay */
-                        if (timingArmed && !firstShedDone)
-                        {
-                            TickType_t nowTick = now;
-                            unsigned int dt_ms =
-                                (unsigned int)((nowTick - detectionTick) * portTICK_PERIOD_MS);
-
-                            firstShedTick = nowTick;
-
-                            printf("FIRST SHED DELAY = %u ms\n", dt_ms);
-
-                            /* Update running record */
-                            recentTimes[recentIndex] = dt_ms;
-                            recentIndex = (recentIndex + 1) % 5;
-
-                            if (recentCount < 5)
-                            {
-                                recentCount++;
-                            }
-
-                            totalTime += dt_ms;
-                            measurementCount++;
-
-                            if (dt_ms < minTime)
-                            {
-                                minTime = dt_ms;
-                            }
-
-                            if (dt_ms > maxTime)
-                            {
-                                maxTime = dt_ms;
-                            }
-
-                            firstShedDone = 1;
-                        }
                     }
                 }
             }
@@ -202,8 +171,7 @@ void DecisionTask(void *pvParameters)
                             {
                                 managingLoads = 0;
                                 allowed = requested;
-                                timingArmed = 0;
-                                firstShedDone = 0;
+                                reset_timing_flags();
                             }
                         }
 

@@ -27,12 +27,12 @@
 
 #define HISTORY_POINTS      100
 
-#define FREQ_THRESH_ROW     43
-#define ROCOF_THRESH_ROW    45
+#define FREQ_THRESH_ROW     41
+#define ROCOF_THRESH_ROW    43
+#define RECENT_VALUES_ROW   45
 #define AVG_TIME_ROW        47
 #define MAX_TIME_ROW        49
 #define MIN_TIME_ROW        51
-#define RECENT_VALUES_ROW   47
 
 typedef struct {
     unsigned int x1;
@@ -252,19 +252,22 @@ void VGATask(void *pvParameters)
         {
             unsigned int display[RECENT_TIMES_COUNT] = {0};
             unsigned int i;
+            unsigned int start;
 
-            if (recCount < RECENT_TIMES_COUNT)
+            if (recCount > 0)
             {
                 for (i = 0; i < recCount; i++)
                 {
-                    display[i] = recent[i];
-                }
-            }
-            else
-            {
-                for (i = 0; i < RECENT_TIMES_COUNT; i++)
-                {
-                    display[i] = recent[(recentIdx + i) % RECENT_TIMES_COUNT];
+                    if (recCount < RECENT_TIMES_COUNT)
+                    {
+                        start = recCount - 1U - i;
+                    }
+                    else
+                    {
+                        start = (recentIdx + RECENT_TIMES_COUNT - 1U - i) % RECENT_TIMES_COUNT;
+                    }
+
+                    display[i] = recent[start];
                 }
             }
 
