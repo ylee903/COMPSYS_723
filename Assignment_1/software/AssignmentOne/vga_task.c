@@ -19,7 +19,7 @@
 
 #define ROCPLT_ORI_X        101
 #define ROCPLT_GRID_SIZE_X  5
-#define ROCPLT_ORI_Y        259.0
+#define ROCPLT_ORI_Y 		300.0
 #define ROCPLT_ROC_RES      0.5
 
 #define MIN_FREQ            45.0
@@ -77,35 +77,35 @@ void VGATask(void *pvParameters)
 
     /* Static axes and labels, following provided design */
     alt_up_pixel_buffer_dma_draw_hline(pixel_buf, 100, 590, 200, 0xFFFF, 0);
-    alt_up_pixel_buffer_dma_draw_hline(pixel_buf, 100, 590, 300, 0xFFFF, 0);
+    alt_up_pixel_buffer_dma_draw_hline(pixel_buf, 100, 590, 340, 0xFFFF, 0);
     alt_up_pixel_buffer_dma_draw_vline(pixel_buf, 100, 50, 200, 0xFFFF, 0);
-    alt_up_pixel_buffer_dma_draw_vline(pixel_buf, 100, 220, 300, 0xFFFF, 0);
+    alt_up_pixel_buffer_dma_draw_vline(pixel_buf, 100, 220, 340, 0xFFFF, 0);
 
     alt_up_char_buffer_string(char_buf, "Frequency (Hz)", 4, 4);
     alt_up_char_buffer_string(char_buf, "55", 10, 7);
     alt_up_char_buffer_string(char_buf, "50", 10, 12);
     alt_up_char_buffer_string(char_buf, "45", 10, 17);
 
-    alt_up_char_buffer_string(char_buf, "Rate of Change (dF/dt Hz/s)", 3, 23);
-    alt_up_char_buffer_string(char_buf, "60", 10, 28);
-    alt_up_char_buffer_string(char_buf, "30", 10, 30);
-    alt_up_char_buffer_string(char_buf, "0", 10, 32);
-    alt_up_char_buffer_string(char_buf, "-30", 9, 34);
-    alt_up_char_buffer_string(char_buf, "-60", 9, 36);
+    alt_up_char_buffer_string(char_buf, "Rate of Change (dF/dt Hz/s)", 3, 28);
+    alt_up_char_buffer_string(char_buf, "60", 10, 33);
+    alt_up_char_buffer_string(char_buf, "30", 10, 35);
+    alt_up_char_buffer_string(char_buf, "0", 10, 37);
+    alt_up_char_buffer_string(char_buf, "-30", 9, 39);
+    alt_up_char_buffer_string(char_buf, "-60", 9, 41);
 
     /* --- Top row --- */
     alt_up_char_buffer_string(char_buf, "System:", 5, 2);
     alt_up_char_buffer_string(char_buf, "Loads:", 30, 2);
     alt_up_char_buffer_string(char_buf, "Active:", 55, 2);
 
-    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 5, 41);
-    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 5, 43);
+    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 5, 46);
+    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 5, 48);
 
     /* --- Measurements (your existing block) --- */
-    alt_up_char_buffer_string(char_buf, "Average Time:", 5, 45);
-    alt_up_char_buffer_string(char_buf, "Max Time:", 5, 47);
-    alt_up_char_buffer_string(char_buf, "Min Time:", 5, 49);
-    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 30, 45);
+    alt_up_char_buffer_string(char_buf, "Average Time:", 5, 50);
+    alt_up_char_buffer_string(char_buf, "Max Time:", 5, 52);
+    alt_up_char_buffer_string(char_buf, "Min Time:", 5, 54);
+    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 30, 50);
 
     for (j = 0; j < HISTORY_POINTS; j++)
     {
@@ -145,7 +145,7 @@ void VGATask(void *pvParameters)
 
         /* Clear old graph areas only */
         alt_up_pixel_buffer_dma_draw_box(pixel_buf, 101, 51, 639, 199, 0, 0);
-        alt_up_pixel_buffer_dma_draw_box(pixel_buf, 101, 221, 639, 299, 0, 0);
+        alt_up_pixel_buffer_dma_draw_box(pixel_buf, 101, 260, 639, 340, 0, 0);
 
         /* Draw threshold lines */
         {
@@ -195,7 +195,7 @@ void VGATask(void *pvParameters)
         /* --- Top row values --- */
         if (maintenance)
         {
-            alt_up_char_buffer_string(char_buf, "Maint      ", 13, 2);
+            alt_up_char_buffer_string(char_buf, "Maintenance", 13, 2);
         }
         else if (managing)
         {
@@ -227,20 +227,20 @@ void VGATask(void *pvParameters)
 
         /* --- Bottom threshold block --- */
         sprintf(buffer, "%5.2f Hz   ", freqThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 41);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 46);
 
         sprintf(buffer, "%5.2f Hz/s ", rocofThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 43);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 48);
 
         /* --- Bottom measurement block --- */
         sprintf(buffer, "%u ms   ", (measCount > 0) ? (totalT / measCount) : 0);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 45);
+        alt_up_char_buffer_string(char_buf, buffer, 20, 50);
 
         sprintf(buffer, "%u ms   ", maxT == 0 ? 0 : maxT);
-        alt_up_char_buffer_string(char_buf, buffer, 16, 47);
+        alt_up_char_buffer_string(char_buf, buffer, 16, 52);
 
         sprintf(buffer, "%u ms   ", (minT == 0xFFFFFFFF) ? 0 : minT);
-        alt_up_char_buffer_string(char_buf, buffer, 16, 49);
+        alt_up_char_buffer_string(char_buf, buffer, 16, 54);
 
         sprintf(buffer, "%u %u %u %u %u      ",
                 recent[(recentIdx + 0) % 5],
@@ -248,7 +248,7 @@ void VGATask(void *pvParameters)
                 recent[(recentIdx + 2) % 5],
                 recent[(recentIdx + 3) % 5],
                 recent[(recentIdx + 4) % 5]);
-        alt_up_char_buffer_string(char_buf, buffer, 48, 45);
+        alt_up_char_buffer_string(char_buf, buffer, 48, 50);
 
         vTaskDelay(pdMS_TO_TICKS(250));
     }
