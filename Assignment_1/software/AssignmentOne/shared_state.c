@@ -21,7 +21,7 @@ TickType_t firstShedTick = 0;
 unsigned int timingArmed = 0;
 unsigned int firstShedDone = 0;
 
-unsigned int recentTimes[5] = {0};
+unsigned int recentTimes[RECENT_TIMES_COUNT] = {0};
 unsigned int recentIndex = 0;
 unsigned int recentCount = 0;
 

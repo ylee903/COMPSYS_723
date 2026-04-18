@@ -4,6 +4,8 @@
 #include "FreeRTOS/FreeRTOS.h"
 #include "FreeRTOS/semphr.h"
 
+#define RECENT_TIMES_COUNT 5U
+
 extern SemaphoreHandle_t sharedStateMutex;
 
 extern unsigned int userRequestedLoads;   // raw switch requests
@@ -25,7 +27,7 @@ extern TickType_t firstShedTick;
 extern unsigned int timingArmed;
 extern unsigned int firstShedDone;
 
-extern unsigned int recentTimes[5];
+extern unsigned int recentTimes[RECENT_TIMES_COUNT];
 extern unsigned int recentIndex;
 extern unsigned int recentCount;
 

@@ -27,6 +27,13 @@
 
 #define HISTORY_POINTS      100
 
+#define FREQ_THRESH_ROW     43
+#define ROCOF_THRESH_ROW    45
+#define AVG_TIME_ROW        47
+#define MAX_TIME_ROW        49
+#define MIN_TIME_ROW        51
+#define RECENT_VALUES_ROW   47
+
 typedef struct {
     unsigned int x1;
     unsigned int y1;
@@ -46,7 +53,7 @@ void VGATask(void *pvParameters)
 
     float freq, rocof, freqThresh, rocofThresh;
     unsigned int unstable, managing, loads, maintenance;
-    unsigned int recent[5], recCount, recentIdx;
+    unsigned int recent[RECENT_TIMES_COUNT], recCount, recentIdx;
     unsigned int minT, maxT, totalT, measCount;
     TickType_t startTick;
 
@@ -98,14 +105,14 @@ void VGATask(void *pvParameters)
     alt_up_char_buffer_string(char_buf, "Loads:", 30, 2);
     alt_up_char_buffer_string(char_buf, "Active:", 55, 2);
 
-    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 5, 46);
-    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 5, 48);
+    alt_up_char_buffer_string(char_buf, "Freq Threshold:", 5, FREQ_THRESH_ROW);
+    alt_up_char_buffer_string(char_buf, "RoC Threshold:", 5, ROCOF_THRESH_ROW);
 
     /* --- Measurements (your existing block) --- */
-    alt_up_char_buffer_string(char_buf, "Average Time:", 5, 50);
-    alt_up_char_buffer_string(char_buf, "Max Time:", 5, 52);
-    alt_up_char_buffer_string(char_buf, "Min Time:", 5, 54);
-    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 30, 50);
+    alt_up_char_buffer_string(char_buf, "Average Time:", 5, AVG_TIME_ROW);
+    alt_up_char_buffer_string(char_buf, "Max Time:", 5, MAX_TIME_ROW);
+    alt_up_char_buffer_string(char_buf, "Min Time:", 5, MIN_TIME_ROW);
+    alt_up_char_buffer_string(char_buf, "Last 5 Values:", 30, RECENT_VALUES_ROW);
 
     for (j = 0; j < HISTORY_POINTS; j++)
     {
@@ -126,7 +133,7 @@ void VGATask(void *pvParameters)
             loads = actualLoads;
             maintenance = maintenanceMode;
 
-            memcpy(recent, recentTimes, sizeof(recentTimes));
+            memcpy(recent, recentTimes, sizeof(recent));
             recCount = recentCount;
             recentIdx = recentIndex;
             minT = minTime;
@@ -227,28 +234,48 @@ void VGATask(void *pvParameters)
 
         /* --- Bottom threshold block --- */
         sprintf(buffer, "%5.2f Hz   ", freqThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 46);
+        alt_up_char_buffer_string(char_buf, buffer, 20, FREQ_THRESH_ROW);
 
         sprintf(buffer, "%5.2f Hz/s ", rocofThresh);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 48);
+        alt_up_char_buffer_string(char_buf, buffer, 20, ROCOF_THRESH_ROW);
 
         /* --- Bottom measurement block --- */
         sprintf(buffer, "%u ms   ", (measCount > 0) ? (totalT / measCount) : 0);
-        alt_up_char_buffer_string(char_buf, buffer, 20, 50);
+        alt_up_char_buffer_string(char_buf, buffer, 20, AVG_TIME_ROW);
 
         sprintf(buffer, "%u ms   ", maxT == 0 ? 0 : maxT);
-        alt_up_char_buffer_string(char_buf, buffer, 16, 52);
+        alt_up_char_buffer_string(char_buf, buffer, 16, MAX_TIME_ROW);
 
         sprintf(buffer, "%u ms   ", (minT == 0xFFFFFFFF) ? 0 : minT);
-        alt_up_char_buffer_string(char_buf, buffer, 16, 54);
+        alt_up_char_buffer_string(char_buf, buffer, 16, MIN_TIME_ROW);
 
-        sprintf(buffer, "%u %u %u %u %u      ",
-                recent[(recentIdx + 0) % 5],
-                recent[(recentIdx + 1) % 5],
-                recent[(recentIdx + 2) % 5],
-                recent[(recentIdx + 3) % 5],
-                recent[(recentIdx + 4) % 5]);
-        alt_up_char_buffer_string(char_buf, buffer, 48, 50);
+        {
+            unsigned int display[RECENT_TIMES_COUNT] = {0};
+            unsigned int i;
+
+            if (recCount < RECENT_TIMES_COUNT)
+            {
+                for (i = 0; i < recCount; i++)
+                {
+                    display[i] = recent[i];
+                }
+            }
+            else
+            {
+                for (i = 0; i < RECENT_TIMES_COUNT; i++)
+                {
+                    display[i] = recent[(recentIdx + i) % RECENT_TIMES_COUNT];
+                }
+            }
+
+            sprintf(buffer, "%u %u %u %u %u      ",
+                    display[0],
+                    display[1],
+                    display[2],
+                    display[3],
+                    display[4]);
+        }
+        alt_up_char_buffer_string(char_buf, buffer, 45, RECENT_VALUES_ROW);
 
         vTaskDelay(pdMS_TO_TICKS(250));
     }
