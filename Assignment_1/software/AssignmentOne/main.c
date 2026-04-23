@@ -97,3 +97,19 @@ int main(void)
 
     return 0;
 }
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+ * This is the main entry point for the Load Control and Frequency Response (LCFR) system.
+ * It initializes the necessary queues, semaphores, and tasks, and then starts the FreeRTOS scheduler.
+ *
+ * The system consists of several tasks:
+ * - DecisionTask: Makes decisions on load shedding based on frequency and ROCOF.
+ * - FrequencyTask: Measures the frequency of the power system.
+ * - ROCOFTask: Calculates the Rate of Change of Frequency (ROCOF).
+ * - LoadControlTask: Controls the load shedding relays.
+ * - SwitchPollTask: Polls the user switches to determine requested loads.
+ * - KeyboardTask: Handles keyboard input for maintenance mode.
+ * - VGATask: Updates the VGA display with system status.
+ *
+ * The system also sets up interrupt service routines (ISRs) for handling push-button presses and PS/2 keyboard input.
+ */

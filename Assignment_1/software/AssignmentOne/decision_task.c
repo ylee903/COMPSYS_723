@@ -182,6 +182,7 @@ void DecisionTask(void *pvParameters)
 
             allowedLoads = allowed & LOAD_MASK;
             relayShedLoads = shed & LOAD_MASK;
+            // What are the above variables for? allowedLoads represents the loads that are currently allowed to be on based on user requests and system decisions. relayShedLoads represents the loads that are currently shed (turned off) by the relay. Both of these are updated based on the decision logic in this task.
             prevUnstable = unstable;
 
             xSemaphoreGive(sharedStateMutex);
