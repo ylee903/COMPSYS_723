@@ -47,3 +47,9 @@ void KeyboardTask(void *pvParameters)
         }
     }
 }
+
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines a FreeRTOS task called KeyboardTask. The task continuously waits for key codes    
+to be sent to the thresholdQueue by the KeyboardISR. When it receives a key code, it takes the sharedStateMutex to safely access and modify the shared variables frequencyThreshold and rocofThreshold based on the key pressed. The keys 'R' and 'E' are used to increase and decrease the ROCOF threshold, while 'F' and 'D' are used to increase and decrease the frequency threshold. After updating the thresholds, it gives back the mutex. This allows the user to adjust the thresholds for load shedding in real-time using the keyboard.
+*/

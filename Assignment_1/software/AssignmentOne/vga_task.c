@@ -283,3 +283,8 @@ void VGATask(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 }
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines a FreeRTOS task called VGATask that is responsible for displaying the system
+status, frequency and ROCOF graphs, and various measurements on a VGA display. The task initializes the pixel buffer and character buffer for the VGA display, then enters an infinite loop where it retrieves the current system state from shared variables protected by a mutex. It maintains a rolling history of frequency and ROCOF values to plot on the graph. The task clears the graph areas, redraws the threshold lines, and plots the frequency and ROCOF graphs based on the history. It also updates text fields to show the current system status (stable, unstable, managing, maintenance), active loads, thresholds, and timing measurements. The display is updated every 250 ms to provide real-time feedback to the user.
+*/

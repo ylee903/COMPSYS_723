@@ -89,3 +89,12 @@ void LoadControlTask(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
+
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines a FreeRTOS task called LoadControlTask. The task continuously runs in an
+infinite loop, where it takes the sharedStateMutex to safely access shared variables that represent the requested loads, shed loads, maintenance mode, and actual loads. Based on whether the system is in maintenance mode or not, it determines which loads should be active (actual) and which LEDs should be turned on (red for active loads, green for shed loads).
+If the system is not in maintenance mode and timing is armed but the first shed actuation has not been done yet,
+ it records the delay from detection to actuation. Finally, it updates the LED states and delays for 50 ms before repeating the process.
+  This task is responsible for controlling the load shedding logic and providing visual feedback through the LEDs.
+*/

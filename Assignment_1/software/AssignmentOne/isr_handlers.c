@@ -68,3 +68,11 @@ void KeyboardISR(void *context, alt_u32 id)
 
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 }
+
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines three interrupt service routines (ISRs) for handling events from the frequency analyser, push buttons, and keyboard.      
+1. FrequencyAnalyserISR: This ISR is triggered by the frequency analyser hardware. It reads the sample count from the hardware register and sends it to the freqQueue for processing by the FrequencyTask. It also records the tick count at which the ISR was called.      
+2. PushButtonISR: This ISR is triggered by the push buttons. It reads which button was pressed, clears the interrupt, and if KEY3 was pressed, it gives the maintenanceSemaphore to signal the DecisionTask to toggle maintenance mode.      
+3. KeyboardISR: This ISR is triggered by keyboard events. It decodes the scancode to get the key code and sends it to the thresholdQueue for processing by the KeyboardTask, which will adjust the frequency and ROCOF thresholds based on user input. All ISRs use the FreeRTOS API to communicate with tasks and ensure that if a higher priority task was woken by the ISR, it will yield to that task immediately after the ISR finishes.
+*/          

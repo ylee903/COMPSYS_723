@@ -38,3 +38,9 @@ void ROCOFTask(void *pvParameters)
         }
     }
 }
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines a FreeRTOS task called ROCOFTask. The task continuously waits for
+frequency values to be sent to the rocofQueue by the FrequencyTask. When it receives a frequency value, it calculates the ROCOF (Rate of Change of Frequency) using the formula: ROCOF = (f_current - f_last) * 2 * f_current * f_last / (f_current + f_last). This formula is derived from the definition of ROCOF and provides a more accurate calculation that accounts for both the current and last frequency values. The calculated ROCOF value is then stored in the shared variable currentROCOF, which is protected by a mutex (sharedStateMutex) to ensure thread safety. Finally, it updates lastFrequencyHz with the current frequency for use in the next calculation. This task is responsible for monitoring the rate of change of frequency, which is crucial for making decisions about load shedding in response to system instability.
+*/
+

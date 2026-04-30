@@ -25,3 +25,8 @@ void SwitchPollTask(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
+// Explanation of the above (with good formatting, i.e. multi line comments, indentation, etc.):
+/*
+This code defines a FreeRTOS task called SwitchPollTask. The task continuously runs in an
+infinite loop, where it reads the state of the slide switches from the hardware register. The value read is masked to only consider the lower 5 bits, which correspond to the 5 switches. The task then takes the sharedStateMutex to safely update the shared variable userRequestedLoads with the current switch states. After updating, it gives back the mutex and delays for 50 ms before repeating the process. This task is responsible for monitoring the user input from the slide switches and updating the system's requested loads accordingly.
+*/
